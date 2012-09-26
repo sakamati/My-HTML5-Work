@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Animation Demo</title>
+    <script type="text/javascript">
+
+        canvasLayer = {
+            id: "canvasEle",
+            width: 1200,
+            height: 600,
+            canvas: function () {
+                var canvasObj = document.getElementById(this.id);
+                return canvasObj;
+            },
+            context: function () {
+                return this.canvas().getContext("2d");
+            },
+            clear: function () {
+                this.context().clearRect(0, 0, this.width, this.height);
+            }
+        };
+
+        circle = {
+            x: 824, /* Starting location (x-coordintae) of this circle */
+            y: 340, /* Starting location (y-coordintae) of this circle */
+            r: 12,
+            sAngle: 0,
+            eAngle: Math.PI * 2,
+            counterclockwise: true,
+            draw: function (canvasContext) {
+                canvasContext.beginPath();
+                canvasContext.arc(this.x, this.y, this.r, this.sAngle, this.eAngle, this.counterclockwise);
+                canvasContext.fillStyle = "rgb(160,215,12)";
+                canvasContext.fill();
+            }
+        };
+
+        image = {
+            id: "deloitteLogo",
+
+            x: (canvasLayer.width - 448) / 2, /* Deloitte logo location (x-coordinate) - Should equal 376 */
+            y: (canvasLayer.height - 84) / 2, /* Deloitte logo location (y-coordinate) - Should equal 258 
+                                               * 448 X 84 is resolution of deloitte logo */
+            draw: function (canvasContext) {
+                img = document.getElementById(this.id);
+                canvasContext.drawImage(img, this.x, this.y);
+            }
+        };
+
+        window.onload = function () {
+            animate();
+            animate3();
+        };
+
+        var vx = 0.7;
+        var vy = 0;
+        var x, y, rad, isShrinking = false, breakHere = false;
+
+        // Green dot bouncing
+        function animate() {
+
+            var centerY = circle.y;
+            var centerX = circle.x;
+
+            var g = 0.1; // gravity
+            var fac = 0.8; // velocity reduction factor per bounce
+
+            vy += g; // gravity
+
+            // update position
+            centerX += vx;
+            centerY += vy;
+
+            // Handle bouncing
+            if (centerY > canvasLayer.height - circle.r) {
+                centerY = canvasLayer.height - circle.r;
+                vy *= -fac;
+            }
+
+            // When dot reaches extreme right of canvas
+            if (centerX > canvasLayer.width - circle.r) {
+                CancelAnimationFrame(function () { });
+                animate2();
+            }
+
+            if (!breakHere) {
+                circle.x = centerX;
+                circle.y = centerY;
+
+                canvasLayer.clear();
+                // Draw Logo
+                image.draw(canvasLayer.context());
+
+                // Draw Circle
+                circle.draw(canvasLayer.context());
+
+                image.id = "deloitteLogoNoDot";
+                // request new frame
+                requestAnimFrame(function () {
+                    animate();
+                });
+            }
+        }
+
+        // Green dot zoomin and shrink
+        function animate2() {
+
+            canvasLayer.clear();
+
+            /* When the green dot reaches its original shape, stop the animation and change the logo image */
+            if (isShrinking && circle.r <= 12) {
+                canvasLayer.clear();
+                image.id = "deloitteLogo";
+                image.draw(canvasLayer.context());
+                CancelAnimationFrame(function () { });
+                breakHere = true;
+            }
+
+            else if (circle.r >= canvasLayer.height / 2 || isShrinking) {
+                isShrinking = true;
+                x = circle.x + 2.3;
+                y = circle.y - 2.3;
+                rad = circle.r - 3;
+            }
+            else {
+                x = circle.x - 10;
+                y = circle.y - 5;
+                rad = circle.r + 4;
+            }
+
+            if (!breakHere) {
+                circle.x = x;
+                circle.y = y;
+                circle.r = rad;
+
+                // Draw Logo
+                image.draw(canvasLayer.context());
+
+                // Draw Circle
+                circle.draw(canvasLayer.context());
+
+                // request new frame
+                requestAnimFrame(function () {
+                    animate2();
+                });
+            }
+        }
+        function animate3() {
+
+            var date = new Date();
+            var dateText = date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds() + " " + date.getMilliseconds();
+            canvasLayer.context().fillText(dateText, 10, 590);
+
+            if (!breakHere) {
+                // request new frame
+                requestAnimFrame(function () {
+                    animate3();
+                });
+            }
+        }
+
+        window.CancelAnimationFrame =
+        (
+        function (timeOutVar) {
+            return window.cancelAnimationFrame ||
+                    window.webkitCancelAnimationFrame ||
+                    window.mozCancelAnimationFrame ||
+                    window.oCancelAnimationFrame ||
+                    window.msCancelAnimationFrame ||
+                    function (timeOutVar) {
+                        clearTimeout(timeOutVar);
+                    };
+        }
+        )();
+        window.requestAnimFrame =
+        (
+                function (callback) {
+                    return window.requestAnimationFrame ||
+                    window.webkitRequestAnimationFrame ||
+                    window.mozRequestAnimationFrame ||
+                    window.oRequestAnimationFrame ||
+                    window.msRequestAnimationFrame ||
+                    function (callback) {
+                        timeOutVar = window.setTimeout(callback, 1000 / 60);
+                    };
+                }
+        )();
+
+    </script>
+</head>
+<body>
+    <canvas id="canvasEle" width="1200" height="600" style="display: block; border: 1px solid gray;
+        margin: 0px auto;">
+        Your browser does not support CANVAS element
+        </canvas>
+    <p style="display: none;">
+        <!-- Images are of resolution: 448 X 84-->
+        <img src="Images/deloitte_logo_web.jpg" alt="Deloitte Logo" id="deloitteLogo" />
+        <img src="Images/deloitte_logo_web_nodot.jpg" alt="Deloitte Logo" id="deloitteLogoNoDot" />
+    </p>
+</body>
+</html>
